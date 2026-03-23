@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//private/tmp/**)",
+      "Bash(CI=true npx --yes create-next-app@latest vigil-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(cp -r /tmp/vigil-temp/. /Users/bv/projects/vs/repos/svd/analyze_web/)",
+      "Bash(rm -rf /tmp/vigil-temp)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
