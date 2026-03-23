@@ -4,7 +4,7 @@ import { getSeverityConfig } from "@/lib/utils/severity";
 import { cn } from "@/lib/utils";
 import type { Alert } from "@/types";
 
-export function StatsBar({ alerts }: { alerts: Alert[] }) {
+export function StatsBar({ alerts, totalCount }: { alerts: Alert[]; totalCount: number }) {
   const severityCounts = [0, 0, 0, 0, 0, 0]; // indices 0-5
   for (const alert of alerts) {
     if (alert.severity_num >= 0 && alert.severity_num <= 5) {
@@ -15,7 +15,7 @@ export function StatsBar({ alerts }: { alerts: Alert[] }) {
   return (
     <div className="flex items-center gap-4 rounded-lg border border-border bg-card p-3 text-sm">
       <div className="font-medium">
-        <span className="text-lg font-bold">{alerts.length}</span>{" "}
+        <span className="text-lg font-bold">{totalCount}</span>{" "}
         <span className="text-muted-foreground">active alerts</span>
       </div>
       <div className="h-4 w-px bg-border" />

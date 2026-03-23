@@ -21,7 +21,7 @@ export function AlertFeed() {
   const [selectMode, setSelectMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const { alerts, acknowledgedIds, loading, loadingMore, hasMore, loadMore } = useAlerts({
+  const { alerts, acknowledgedIds, totalCount, loading, loadingMore, hasMore, loadMore } = useAlerts({
     cameras: filters.cameras.length > 0 ? filters.cameras : undefined,
     severities: filters.severities.length > 0 ? filters.severities : undefined,
     sortBy: filters.sortBy,
@@ -114,7 +114,7 @@ export function AlertFeed() {
 
   return (
     <div className="space-y-4">
-      <StatsBar alerts={alerts} />
+      <StatsBar alerts={alerts} totalCount={totalCount} />
       <AlertFilters value={filters} onChange={setFilters} />
 
       {/* Bulk actions bar (admin only) */}

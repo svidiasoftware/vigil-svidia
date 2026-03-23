@@ -16,6 +16,7 @@ interface AlertFilters {
 export function useAlerts(filters: AlertFilters = {}) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -31,7 +32,7 @@ export function useAlerts(filters: AlertFilters = {}) {
 
     let query = supabase
       .from("alerts")
-      .select("*")
+      .select("*", { count: "exact" })
       .order(filters.sortBy || "captured_at", {
         ascending: filters.sortOrder === "asc",
       })
@@ -44,13 +45,14 @@ export function useAlerts(filters: AlertFilters = {}) {
       query = query.in("severity_num", filters.severities);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
     if (!error && data) {
       if (append) {
         setAlerts((prev) => [...prev, ...data]);
       } else {
         setAlerts(data);
       }
+      if (count !== null) setTotalCount(count);
       setHasMore(data.length === PAGE_SIZE);
     }
     setLoading(false);
@@ -91,6 +93,7 @@ export function useAlerts(filters: AlertFilters = {}) {
         (payload) => {
           const newAlert = payload.new as Alert;
           setAlerts((prev) => [newAlert, ...prev]);
+          setTotalCount((prev) => prev + 1);
         },
       )
       .on(
@@ -99,6 +102,7 @@ export function useAlerts(filters: AlertFilters = {}) {
         (payload) => {
           const deletedId = (payload.old as { id: string }).id;
           setAlerts((prev) => prev.filter((a) => a.id !== deletedId));
+          setTotalCount((prev) => Math.max(0, prev - 1));
         },
       )
       .on(
@@ -128,5 +132,5 @@ export function useAlerts(filters: AlertFilters = {}) {
     };
   }, []);
 
-  return { alerts, acknowledgedIds, loading, loadingMore, hasMore, loadMore, refetch: fetchAlerts };
+  return { alerts, acknowledgedIds, totalCount, loading, loadingMore, hasMore, loadMore, refetch: fetchAlerts };
 }

@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/utils/date";
+import type { Alert } from "@/types";
 
 export function SystemStatus() {
   const [lastAlert, setLastAlert] = useState<string | null>(null);
   const [cameraCount, setCameraCount] = useState(0);
+  const [, setTick] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
-    async function fetch() {
+    async function fetchInitial() {
       const { data: alert } = await supabase
         .from("alerts")
         .select("captured_at")
@@ -27,7 +29,32 @@ export function SystemStatus() {
 
       setCameraCount(count ?? 0);
     }
-    fetch();
+    fetchInitial();
+
+    // Realtime: update on new alerts
+    const channel = supabase
+      .channel("vigil-status")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "alerts" },
+        (payload) => {
+          const newAlert = payload.new as Alert;
+          setLastAlert((prev) =>
+            !prev || new Date(newAlert.captured_at) > new Date(prev)
+              ? newAlert.captured_at
+              : prev,
+          );
+        },
+      )
+      .subscribe();
+
+    // Refresh relative time every 30s
+    const timer = setInterval(() => setTick((t) => t + 1), 30000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(timer);
+    };
   }, []);
 
   const isRecent = lastAlert
