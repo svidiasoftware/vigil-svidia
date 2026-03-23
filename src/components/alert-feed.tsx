@@ -21,7 +21,7 @@ export function AlertFeed() {
   const [selectMode, setSelectMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const { alerts, acknowledgedIds, loading } = useAlerts({
+  const { alerts, acknowledgedIds, loading, loadingMore, hasMore, loadMore } = useAlerts({
     cameras: filters.cameras.length > 0 ? filters.cameras : undefined,
     severities: filters.severities.length > 0 ? filters.severities : undefined,
     sortBy: filters.sortBy,
@@ -210,6 +210,19 @@ export function AlertFeed() {
               </div>
             </div>
           ))}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={loadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading..." : "Load More"}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

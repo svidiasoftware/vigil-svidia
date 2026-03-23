@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Alert, AlertAcknowledgment } from "@/types";
 
+const PAGE_SIZE = 20;
+
 interface AlertFilters {
   cameras?: string[];
   severities?: number[];
@@ -15,16 +17,25 @@ export function useAlerts(filters: AlertFilters = {}) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const supabase = createClient();
 
-  const fetchAlerts = useCallback(async () => {
+  const fetchAlerts = useCallback(async (pageNum = 0, append = false) => {
+    if (pageNum === 0) setLoading(true);
+    else setLoadingMore(true);
+
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
     let query = supabase
       .from("alerts")
       .select("*")
       .order(filters.sortBy || "captured_at", {
         ascending: filters.sortOrder === "asc",
       })
-      .limit(100);
+      .range(from, to);
 
     if (filters.cameras?.length) {
       query = query.in("camera_id", filters.cameras);
@@ -35,9 +46,15 @@ export function useAlerts(filters: AlertFilters = {}) {
 
     const { data, error } = await query;
     if (!error && data) {
-      setAlerts(data);
+      if (append) {
+        setAlerts((prev) => [...prev, ...data]);
+      } else {
+        setAlerts(data);
+      }
+      setHasMore(data.length === PAGE_SIZE);
     }
     setLoading(false);
+    setLoadingMore(false);
   }, [filters.cameras, filters.severities, filters.sortBy, filters.sortOrder]);
 
   const fetchAcks = useCallback(async () => {
@@ -49,10 +66,20 @@ export function useAlerts(filters: AlertFilters = {}) {
     }
   }, []);
 
+  // Reset to page 0 when filters change
   useEffect(() => {
-    fetchAlerts();
+    setPage(0);
+    setHasMore(true);
+    fetchAlerts(0, false);
     fetchAcks();
   }, [fetchAlerts, fetchAcks]);
+
+  function loadMore() {
+    if (loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchAlerts(nextPage, true);
+  }
 
   // Realtime subscription
   useEffect(() => {
@@ -101,5 +128,5 @@ export function useAlerts(filters: AlertFilters = {}) {
     };
   }, []);
 
-  return { alerts, acknowledgedIds, loading, refetch: fetchAlerts };
+  return { alerts, acknowledgedIds, loading, loadingMore, hasMore, loadMore, refetch: fetchAlerts };
 }
