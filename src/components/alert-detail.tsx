@@ -1,0 +1,141 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@/lib/hooks/use-user";
+import { SeverityBadge } from "@/components/severity-badge";
+import { Button } from "@/components/ui/button";
+import { getAlertImageUrl } from "@/lib/utils/images";
+import { formatTimestamp, timeAgo } from "@/lib/utils/date";
+import type { Alert } from "@/types";
+
+interface AckWithProfile {
+  id: string;
+  alert_id: string;
+  user_id: string;
+  note: string;
+  acknowledged_at: string;
+  profiles: { display_name: string } | null;
+}
+
+export function AlertDetail({
+  alert,
+  acknowledgments,
+}: {
+  alert: Alert;
+  acknowledgments: AckWithProfile[];
+}) {
+  const [acks, setAcks] = useState(acknowledgments);
+  const [acking, setAcking] = useState(false);
+  const { user } = useUser();
+  const supabase = createClient();
+  const router = useRouter();
+
+  const alreadyAcked = acks.some((a) => a.user_id === user?.id);
+
+  async function handleAcknowledge() {
+    if (!user || alreadyAcked) return;
+    setAcking(true);
+    const { data } = await supabase
+      .from("alert_acknowledgments")
+      .insert({ alert_id: alert.id, user_id: user.id })
+      .select("*, profiles:user_id(display_name)")
+      .single();
+    if (data) setAcks((prev) => [...prev, data]);
+    setAcking(false);
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <button
+        onClick={() => router.back()}
+        className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        Back to alerts
+      </button>
+
+      {/* Image */}
+      <div className="overflow-hidden rounded-lg border border-border bg-muted">
+        <img
+          src={getAlertImageUrl(alert.image_path)}
+          alt={`Alert from ${alert.camera_id}`}
+          className="w-full"
+        />
+      </div>
+
+      {/* Metadata */}
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <MetaField label="Camera" value={alert.camera_id} />
+        <MetaField label="Severity">
+          <SeverityBadge severity={alert.severity_num} />
+        </MetaField>
+        <MetaField label="Confidence" value={`${alert.confidence}%`} />
+        <MetaField label="Status" value={alert.event_status} />
+        <MetaField label="Time" value={formatTimestamp(alert.captured_at)} />
+        <MetaField label="Relative" value={timeAgo(alert.captured_at)} />
+        {alert.consecutive_count > 1 && (
+          <MetaField label="Consecutive" value={`${alert.consecutive_count} cycles`} />
+        )}
+        {alert.first_seen_at && (
+          <MetaField label="First Seen" value={formatTimestamp(alert.first_seen_at)} />
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="mt-4 rounded-lg border border-border bg-card p-4">
+        <h3 className="text-sm font-medium text-muted-foreground mb-1">Description</h3>
+        <p className="text-sm">{alert.description}</p>
+      </div>
+
+      {/* Actions */}
+      <div className="mt-4 flex items-center gap-3">
+        <Button
+          onClick={handleAcknowledge}
+          disabled={alreadyAcked || acking}
+          variant={alreadyAcked ? "secondary" : "default"}
+          size="sm"
+        >
+          {alreadyAcked ? "Acknowledged" : acking ? "..." : "Acknowledge"}
+        </Button>
+      </div>
+
+      {/* Acknowledgments */}
+      {acks.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">
+            Acknowledged by
+          </h3>
+          <div className="space-y-1">
+            {acks.map((ack) => (
+              <div key={ack.id} className="text-xs text-muted-foreground">
+                {ack.profiles?.display_name || "Unknown"} &mdash;{" "}
+                {timeAgo(ack.acknowledged_at)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetaField({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      {children || <p className="text-sm font-medium">{value}</p>}
+    </div>
+  );
+}
