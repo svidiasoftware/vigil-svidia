@@ -45,6 +45,19 @@ export function AlertFeed() {
     });
   }
 
+  async function handleFalsePositive(alertId: string) {
+    const { error } = await supabase
+      .from("alerts")
+      .update({ false_positive: true })
+      .eq("id", alertId);
+    if (error) {
+      console.error("False positive failed:", error);
+      return;
+    }
+    // Update local state immediately
+    // Refetch will pick up the change, but let's be optimistic
+  }
+
   async function handleDelete(alertId: string) {
     const alert = alerts.find((a) => a.id === alertId);
     const { error } = await supabase.from("alerts").delete().eq("id", alertId);
@@ -204,6 +217,7 @@ export function AlertFeed() {
                   acknowledged={acknowledgedIds.has(alert.id)}
                   onAcknowledge={handleAcknowledge}
                   onFilterCamera={(cam) => setFilters((f) => ({ ...f, cameras: [cam] }))}
+                  onFalsePositive={handleFalsePositive}
                   onDelete={handleDelete}
                   isAdmin={isAdmin}
                 />

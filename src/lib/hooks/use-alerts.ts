@@ -98,6 +98,16 @@ export function useAlerts(filters: AlertFilters = {}) {
       )
       .on(
         "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "alerts" },
+        (payload) => {
+          const updated = payload.new as Alert;
+          setAlerts((prev) =>
+            prev.map((a) => (a.id === updated.id ? updated : a)),
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
         { event: "DELETE", schema: "public", table: "alerts" },
         (payload) => {
           const deletedId = (payload.old as { id: string }).id;

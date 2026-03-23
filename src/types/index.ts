@@ -16,6 +16,7 @@ export interface Alert {
   description: string;
   image_path: string;
   source_filename: string | null;
+  false_positive: boolean;
   created_at: string;
 }
 

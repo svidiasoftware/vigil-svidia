@@ -61,6 +61,7 @@ CREATE TABLE public.alerts (
   description       TEXT NOT NULL DEFAULT '',
   image_path        TEXT NOT NULL,
   source_filename   TEXT,
+  false_positive    BOOLEAN NOT NULL DEFAULT FALSE,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -144,6 +145,9 @@ CREATE POLICY "Admins can manage cameras"
 -- ALERTS (inserts from service_role bypass RLS)
 CREATE POLICY "Authenticated users can view alerts"
   ON public.alerts FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Authenticated users can update alerts"
+  ON public.alerts FOR UPDATE TO authenticated
+  USING (TRUE) WITH CHECK (TRUE);
 CREATE POLICY "Admins can delete alerts"
   ON public.alerts FOR DELETE TO authenticated
   USING (public.is_admin());

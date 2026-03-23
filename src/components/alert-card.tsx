@@ -13,11 +13,12 @@ interface AlertCardProps {
   acknowledged: boolean;
   onAcknowledge?: (alertId: string) => void;
   onFilterCamera?: (cameraId: string) => void;
+  onFalsePositive?: (alertId: string) => void;
   onDelete?: (alertId: string) => void;
   isAdmin?: boolean;
 }
 
-export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, onDelete, isAdmin }: AlertCardProps) {
+export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, onFalsePositive, onDelete, isAdmin }: AlertCardProps) {
   const config = getSeverityConfig(alert.severity_num);
 
   return (
@@ -69,6 +70,11 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
                 ACK
               </span>
             )}
+            {alert.false_positive && (
+              <span className="rounded bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-medium text-orange-400">
+                FALSE +
+              </span>
+            )}
           </div>
           <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
             {alert.description}
@@ -98,6 +104,21 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+          </button>
+        )}
+        {!alert.false_positive && onFalsePositive && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onFalsePositive(alert.id);
+            }}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-orange-500/20 hover:text-orange-400"
+            title="Mark as false positive"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.498 15.25H4.372c-1.026 0-1.945-.694-2.054-1.715a12.137 12.137 0 0 1-.068-1.285c0-2.848.992-5.464 2.649-7.521C5.287 4.247 5.886 4 6.504 4h4.016a4.5 4.5 0 0 1 1.423.23l3.114 1.04a4.5 4.5 0 0 0 1.423.23h1.294M7.498 15.25c.618 0 .991.724.725 1.282A7.471 7.471 0 0 0 7.5 19.75 2.25 2.25 0 0 0 9.75 22a.75.75 0 0 0 .75-.75v-.633c0-.573.11-1.14.322-1.672.304-.76.93-1.33 1.653-1.715a9.04 9.04 0 0 0 2.86-2.4c.498-.634 1.226-1.08 2.032-1.08h.384" />
             </svg>
           </button>
         )}
