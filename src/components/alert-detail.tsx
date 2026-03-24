@@ -84,6 +84,12 @@ export function AlertDetail({
         {alert.first_seen_at && (
           <MetaField label="First Seen" value={formatTimestamp(alert.first_seen_at)} />
         )}
+        {alert.analyzer_host && (
+          <MetaField label="Analyzer Host" value={alert.analyzer_host} />
+        )}
+        {alert.analyzer_model && (
+          <MetaField label="AI Model" value={alert.analyzer_model.split("/").pop() || alert.analyzer_model} />
+        )}
       </div>
 
       {/* Description */}
