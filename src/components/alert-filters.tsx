@@ -36,7 +36,7 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
       .select("*")
       .eq("is_enabled", true)
       .order("id")
-      .then(({ data }) => {
+      .then(({ data }: { data: Camera[] | null }) => {
         if (data) setCameras(data);
       });
   }, []);

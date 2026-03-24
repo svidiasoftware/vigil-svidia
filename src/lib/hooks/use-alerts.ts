@@ -65,7 +65,7 @@ export function useAlerts(filters: AlertFilters = {}) {
       .from("alert_acknowledgments")
       .select("alert_id");
     if (data) {
-      setAcknowledgedIds(new Set(data.map((a) => a.alert_id)));
+      setAcknowledgedIds(new Set(data.map((a: { alert_id: string }) => a.alert_id)));
     }
   }, []);
 
@@ -85,13 +85,15 @@ export function useAlerts(filters: AlertFilters = {}) {
   }
 
   // Realtime subscription — stable client ref, runs once
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type Payload = any;
   useEffect(() => {
     const channel = supabase
       .channel("vigil-alerts")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "alerts" },
-        (payload) => {
+        (payload: Payload) => {
           const newAlert = payload.new as Alert;
           setAlerts((prev) => [newAlert, ...prev]);
           setTotalCount((prev) => prev + 1);
@@ -100,7 +102,7 @@ export function useAlerts(filters: AlertFilters = {}) {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "alerts" },
-        (payload) => {
+        (payload: Payload) => {
           const updated = payload.new as Alert;
           setAlerts((prev) =>
             prev.map((a) => (a.id === updated.id ? updated : a)),
@@ -110,8 +112,8 @@ export function useAlerts(filters: AlertFilters = {}) {
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "alerts" },
-        (payload) => {
-          const deletedId = (payload.old as { id: string }).id;
+        (payload: Payload) => {
+          const deletedId = payload.old?.id as string;
           setAlerts((prev) => prev.filter((a) => a.id !== deletedId));
           setTotalCount((prev) => Math.max(0, prev - 1));
         },
@@ -119,7 +121,7 @@ export function useAlerts(filters: AlertFilters = {}) {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "alert_acknowledgments" },
-        (payload) => {
+        (payload: Payload) => {
           const ack = payload.new as AlertAcknowledgment;
           setAcknowledgedIds((prev) => new Set([...prev, ack.alert_id]));
         },
@@ -127,16 +129,16 @@ export function useAlerts(filters: AlertFilters = {}) {
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "alert_acknowledgments" },
-        (payload) => {
-          const oldAck = payload.old as { alert_id: string };
+        (payload: Payload) => {
+          const alertId = payload.old?.alert_id as string;
           setAcknowledgedIds((prev) => {
             const next = new Set(prev);
-            next.delete(oldAck.alert_id);
+            next.delete(alertId);
             return next;
           });
         },
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         if (status === "SUBSCRIBED") {
           console.log("[Vigil] Realtime connected");
         }

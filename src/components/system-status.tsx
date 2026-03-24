@@ -37,7 +37,8 @@ export function SystemStatus() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "alerts" },
-        (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
           const newAlert = payload.new as Alert;
           setLastAlert((prev) =>
             !prev || new Date(newAlert.captured_at) > new Date(prev)

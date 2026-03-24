@@ -28,7 +28,7 @@ export default function SettingsPage() {
       .select("*")
       .eq("user_id", user.id)
       .single()
-      .then(({ data }) => {
+      .then(({ data }: { data: { severity_threshold: number; browser_enabled: boolean } | null }) => {
         if (data) {
           setThreshold(data.severity_threshold);
           setBrowserEnabled(data.browser_enabled);

@@ -27,7 +27,7 @@ export function useNotification() {
       .select("*")
       .eq("user_id", user.id)
       .single()
-      .then(({ data }) => {
+      .then(({ data }: { data: { severity_threshold: number; browser_enabled: boolean } | null }) => {
         if (data) {
           setThreshold(data.severity_threshold);
           setEnabled(data.browser_enabled);
@@ -44,7 +44,8 @@ export function useNotification() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "alerts" },
-        (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
           const alert = payload.new as Alert;
           if (alert.severity_num >= threshold) {
             showNotification(alert);
