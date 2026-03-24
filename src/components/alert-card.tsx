@@ -30,9 +30,9 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
       )}
     >
       {/* Thumbnail */}
-      <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+      <div className="relative h-28 w-44 sm:h-32 sm:w-52 flex-shrink-0 overflow-hidden rounded-md bg-muted">
         <img
-          src={getAlertImageUrl(alert.image_path, 320)}
+          src={getAlertImageUrl(alert.image_path, 480)}
           alt={`Alert from ${alert.camera_id}`}
           className="h-full w-full object-cover"
           loading="lazy"

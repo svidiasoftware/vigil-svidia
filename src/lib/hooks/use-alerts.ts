@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Alert, AlertAcknowledgment } from "@/types";
 
@@ -21,7 +21,8 @@ export function useAlerts(filters: AlertFilters = {}) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
 
   const fetchAlerts = useCallback(async (pageNum = 0, append = false) => {
     if (pageNum === 0) setLoading(true);
@@ -83,7 +84,7 @@ export function useAlerts(filters: AlertFilters = {}) {
     fetchAlerts(nextPage, true);
   }
 
-  // Realtime subscription
+  // Realtime subscription — stable client ref, runs once
   useEffect(() => {
     const channel = supabase
       .channel("vigil-alerts")
@@ -135,12 +136,16 @@ export function useAlerts(filters: AlertFilters = {}) {
           });
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[Vigil] Realtime connected");
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [supabase]);
 
   return { alerts, acknowledgedIds, totalCount, loading, loadingMore, hasMore, loadMore, refetch: fetchAlerts };
 }
