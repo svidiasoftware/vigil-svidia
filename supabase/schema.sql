@@ -182,6 +182,22 @@ CREATE POLICY "Users can manage own notification prefs"
   ON public.notification_preferences FOR ALL TO authenticated
   USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
+-- 2g. Service status (heartbeat from analyzers)
+CREATE TABLE public.service_status (
+  service_id        TEXT PRIMARY KEY,
+  last_heartbeat    TIMESTAMPTZ NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'running',
+  hostname          TEXT,
+  model             TEXT,
+  images_analyzed   INTEGER DEFAULT 0,
+  alerts_count      INTEGER DEFAULT 0
+);
+
+ALTER TABLE public.service_status ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view service status"
+  ON public.service_status FOR SELECT TO authenticated USING (TRUE);
+
 -- ============================================================
 -- 5. REALTIME
 -- ============================================================

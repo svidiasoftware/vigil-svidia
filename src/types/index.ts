@@ -63,6 +63,16 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface ServiceStatus {
+  service_id: string;
+  last_heartbeat: string;
+  status: string;
+  hostname: string | null;
+  model: string | null;
+  images_analyzed: number;
+  alerts_count: number;
+}
+
 export interface NotificationPreferences {
   user_id: string;
   severity_threshold: number;
