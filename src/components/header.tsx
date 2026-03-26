@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SystemStatus } from "@/components/system-status";
+import { APP_VERSION } from "@/lib/version";
 
 export function Header() {
   const { user, profile, isAdmin } = useUser();
@@ -46,6 +47,7 @@ export function Header() {
             />
           </svg>
           <span className="text-lg font-semibold tracking-tight">Vigil</span>
+          <span className="text-[10px] text-muted-foreground/50">v{APP_VERSION}</span>
         </div>
         <SystemStatus />
       </div>

@@ -127,7 +127,7 @@ export function AlertFeed() {
 
   return (
     <div className="space-y-4">
-      <StatsBar alerts={alerts} totalCount={totalCount} />
+      <StatsBar totalCount={totalCount} />
       <AlertFilters value={filters} onChange={setFilters} />
 
       {/* Bulk actions bar (admin only) */}

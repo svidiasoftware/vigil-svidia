@@ -1,16 +1,42 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { getSeverityConfig } from "@/lib/utils/severity";
 import { cn } from "@/lib/utils";
-import type { Alert } from "@/types";
 
-export function StatsBar({ alerts, totalCount }: { alerts: Alert[]; totalCount: number }) {
-  const severityCounts = [0, 0, 0, 0, 0, 0]; // indices 0-5
-  for (const alert of alerts) {
-    if (alert.severity_num >= 0 && alert.severity_num <= 5) {
-      severityCounts[alert.severity_num]++;
+export function StatsBar({ totalCount }: { totalCount: number }) {
+  const [severityCounts, setSeverityCounts] = useState<number[]>([0, 0, 0, 0, 0, 0]);
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
+
+  useEffect(() => {
+    async function fetchCounts() {
+      const counts = [0, 0, 0, 0, 0, 0];
+      const promises = [1, 2, 3, 4, 5].map(async (sev) => {
+        const { count } = await supabase
+          .from("alerts")
+          .select("*", { count: "exact", head: true })
+          .eq("severity_num", sev);
+        counts[sev] = count ?? 0;
+      });
+      await Promise.all(promises);
+      setSeverityCounts(counts);
     }
-  }
+    fetchCounts();
+
+    // Refresh on realtime changes
+    const channel = supabase
+      .channel("vigil-stats")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "alerts" },
+        () => { fetchCounts(); },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [supabase]);
 
   return (
     <div className="flex items-center gap-4 rounded-lg border border-border bg-card p-3 text-sm">
