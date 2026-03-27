@@ -16,6 +16,7 @@ export function AlertFeed() {
     severities: [] as number[],
     sortBy: "captured_at" as "captured_at" | "severity_num",
     ackFilter: "all" as "all" | "ack" | "unack",
+    starFilter: "all" as "all" | "starred",
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
@@ -32,8 +33,9 @@ export function AlertFeed() {
   const supabase = createClient();
 
   const filteredAlerts = alerts.filter((alert) => {
-    if (filters.ackFilter === "ack") return acknowledgedIds.has(alert.id);
-    if (filters.ackFilter === "unack") return !acknowledgedIds.has(alert.id);
+    if (filters.ackFilter === "ack" && !acknowledgedIds.has(alert.id)) return false;
+    if (filters.ackFilter === "unack" && acknowledgedIds.has(alert.id)) return false;
+    if (filters.starFilter === "starred" && !alert.starred) return false;
     return true;
   });
 
