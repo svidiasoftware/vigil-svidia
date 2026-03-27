@@ -9,6 +9,7 @@ const PAGE_SIZE = 20;
 interface AlertFilters {
   cameras?: string[];
   severities?: number[];
+  starred?: boolean;
   sortBy?: "captured_at" | "severity_num";
   sortOrder?: "asc" | "desc";
 }
@@ -45,6 +46,9 @@ export function useAlerts(filters: AlertFilters = {}) {
     if (filters.severities?.length) {
       query = query.in("severity_num", filters.severities);
     }
+    if (filters.starred) {
+      query = query.eq("starred", true);
+    }
 
     const { data, error, count } = await query;
     if (!error && data) {
@@ -58,7 +62,7 @@ export function useAlerts(filters: AlertFilters = {}) {
     }
     setLoading(false);
     setLoadingMore(false);
-  }, [filters.cameras, filters.severities, filters.sortBy, filters.sortOrder]);
+  }, [filters.cameras, filters.severities, filters.starred, filters.sortBy, filters.sortOrder]);
 
   const fetchAcks = useCallback(async () => {
     const { data } = await supabase

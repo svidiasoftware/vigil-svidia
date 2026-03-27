@@ -22,9 +22,10 @@ export function AlertFeed() {
   const [selectMode, setSelectMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const { alerts, acknowledgedIds, totalCount, loading, loadingMore, hasMore, loadMore } = useAlerts({
+  const { alerts, acknowledgedIds, totalCount, loading, loadingMore, hasMore, loadMore, refetch } = useAlerts({
     cameras: filters.cameras.length > 0 ? filters.cameras : undefined,
     severities: filters.severities.length > 0 ? filters.severities : undefined,
+    starred: filters.starFilter === "starred" ? true : undefined,
     sortBy: filters.sortBy,
     sortOrder: filters.sortBy === "severity_num" ? "desc" : "desc",
   });
@@ -35,7 +36,6 @@ export function AlertFeed() {
   const filteredAlerts = alerts.filter((alert) => {
     if (filters.ackFilter === "ack" && !acknowledgedIds.has(alert.id)) return false;
     if (filters.ackFilter === "unack" && acknowledgedIds.has(alert.id)) return false;
-    if (filters.starFilter === "starred" && !alert.starred) return false;
     return true;
   });
 
@@ -56,12 +56,12 @@ export function AlertFeed() {
       console.error("False positive failed:", error);
       return;
     }
-    // Update local state immediately
-    // Refetch will pick up the change, but let's be optimistic
+    refetch();
   }
 
   async function handleStar(alertId: string, starred: boolean) {
     await supabase.from("alerts").update({ starred }).eq("id", alertId);
+    refetch();
   }
 
   async function handleDelete(alertId: string) {
