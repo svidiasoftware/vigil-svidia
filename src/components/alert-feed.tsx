@@ -58,6 +58,10 @@ export function AlertFeed() {
     // Refetch will pick up the change, but let's be optimistic
   }
 
+  async function handleStar(alertId: string, starred: boolean) {
+    await supabase.from("alerts").update({ starred }).eq("id", alertId);
+  }
+
   async function handleDelete(alertId: string) {
     const alert = alerts.find((a) => a.id === alertId);
     const { error } = await supabase.from("alerts").delete().eq("id", alertId);
@@ -218,6 +222,7 @@ export function AlertFeed() {
                   onAcknowledge={handleAcknowledge}
                   onFilterCamera={(cam) => setFilters((f) => ({ ...f, cameras: [cam] }))}
                   onFalsePositive={handleFalsePositive}
+                  onStar={handleStar}
                   onDelete={handleDelete}
                   isAdmin={isAdmin}
                 />

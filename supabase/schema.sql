@@ -62,6 +62,7 @@ CREATE TABLE public.alerts (
   image_path        TEXT NOT NULL,
   source_filename   TEXT,
   false_positive    BOOLEAN NOT NULL DEFAULT FALSE,
+  starred           BOOLEAN NOT NULL DEFAULT FALSE,
   analyzer_host     TEXT,
   analyzer_model    TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()

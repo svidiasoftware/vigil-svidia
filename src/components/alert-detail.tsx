@@ -29,6 +29,7 @@ export function AlertDetail({
   const [acks, setAcks] = useState(acknowledgments);
   const [acking, setAcking] = useState(false);
   const [isFP, setIsFP] = useState(alert.false_positive ?? false);
+  const [isStarred, setIsStarred] = useState(alert.starred ?? false);
   const { user } = useUser();
   const supabase = createClient();
   const router = useRouter();
@@ -124,6 +125,23 @@ export function AlertDetail({
             <path strokeLinecap="round" strokeLinejoin="round" d="M7.498 15.25H4.372c-1.026 0-1.945-.694-2.054-1.715a12.137 12.137 0 0 1-.068-1.285c0-2.848.992-5.464 2.649-7.521C5.287 4.247 5.886 4 6.504 4h4.016a4.5 4.5 0 0 1 1.423.23l3.114 1.04a4.5 4.5 0 0 0 1.423.23h1.294M7.498 15.25c.618 0 .991.724.725 1.282A7.471 7.471 0 0 0 7.5 19.75 2.25 2.25 0 0 0 9.75 22a.75.75 0 0 0 .75-.75v-.633c0-.573.11-1.14.322-1.672.304-.76.93-1.33 1.653-1.715a9.04 9.04 0 0 0 2.86-2.4c.498-.634 1.226-1.08 2.032-1.08h.384" />
           </svg>
           {isFP ? "False Positive" : "False Positive"}
+        </Button>
+        <Button
+          onClick={async () => {
+            await supabase
+              .from("alerts")
+              .update({ starred: !isStarred })
+              .eq("id", alert.id);
+            setIsStarred(!isStarred);
+          }}
+          variant={isStarred ? "secondary" : "outline"}
+          size="sm"
+          className={isStarred ? "text-yellow-400" : ""}
+        >
+          <svg className={`h-4 w-4 mr-1 ${isStarred ? "fill-yellow-400" : ""}`} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" fill="none">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+          </svg>
+          {isStarred ? "Starred" : "Star"}
         </Button>
       </div>
 

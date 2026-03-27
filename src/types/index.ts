@@ -17,6 +17,7 @@ export interface Alert {
   image_path: string;
   source_filename: string | null;
   false_positive: boolean;
+  starred: boolean;
   analyzer_host: string | null;
   analyzer_model: string | null;
   created_at: string;
