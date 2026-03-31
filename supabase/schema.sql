@@ -19,7 +19,8 @@ CREATE TABLE public.profiles (
   display_name  TEXT NOT NULL DEFAULT '',
   role          user_role NOT NULL DEFAULT 'viewer',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  all_cameras_access BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Auto-create profile on signup
@@ -46,7 +47,14 @@ CREATE TABLE public.cameras (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 2c. Alerts (core table)
+-- 2c. User camera access (junction table)
+CREATE TABLE public.user_camera_access (
+  user_id   UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  camera_id TEXT NOT NULL REFERENCES public.cameras(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, camera_id)
+);
+
+-- 2d. Alerts (core table)
 CREATE TABLE public.alerts (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   camera_id         TEXT NOT NULL REFERENCES public.cameras(id),
@@ -68,7 +76,7 @@ CREATE TABLE public.alerts (
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 2d. Alert acknowledgments
+-- 2f. Alert acknowledgments
 CREATE TABLE public.alert_acknowledgments (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   alert_id        UUID NOT NULL REFERENCES public.alerts(id) ON DELETE CASCADE,
@@ -78,7 +86,7 @@ CREATE TABLE public.alert_acknowledgments (
   UNIQUE(alert_id, user_id)
 );
 
--- 2e. Silence rules
+-- 2g. Silence rules
 CREATE TABLE public.silence_rules (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   camera_id     TEXT REFERENCES public.cameras(id) ON DELETE CASCADE,
@@ -91,7 +99,7 @@ CREATE TABLE public.silence_rules (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 2f. Notification preferences (per-user)
+-- 2h. Notification preferences (per-user)
 CREATE TABLE public.notification_preferences (
   user_id             UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   severity_threshold  SMALLINT NOT NULL DEFAULT 3,
@@ -102,6 +110,7 @@ CREATE TABLE public.notification_preferences (
 -- ============================================================
 -- 3. INDEXES
 -- ============================================================
+CREATE INDEX idx_user_camera_access_user  ON public.user_camera_access (user_id);
 CREATE INDEX idx_alerts_captured_at       ON public.alerts (captured_at DESC);
 CREATE INDEX idx_alerts_camera_captured   ON public.alerts (camera_id, captured_at DESC);
 CREATE INDEX idx_alerts_severity_captured ON public.alerts (severity_num DESC, captured_at DESC);
@@ -113,6 +122,7 @@ CREATE INDEX idx_silence_active          ON public.silence_rules (is_active) WHE
 -- 4. ROW LEVEL SECURITY
 -- ============================================================
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_camera_access ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cameras ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.alert_acknowledgments ENABLE ROW LEVEL SECURITY;
@@ -138,16 +148,41 @@ CREATE POLICY "Admins can update any profile"
   ON public.profiles FOR UPDATE TO authenticated
   USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+-- USER CAMERA ACCESS
+CREATE POLICY "Users can view own camera access"
+  ON public.user_camera_access FOR SELECT TO authenticated
+  USING (user_id = auth.uid() OR public.is_admin());
+CREATE POLICY "Admins can manage camera access"
+  ON public.user_camera_access FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- Helper: can current user see a given camera?
+CREATE OR REPLACE FUNCTION public.can_access_camera(cam_id TEXT)
+RETURNS BOOLEAN AS $$
+  SELECT
+    public.is_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND all_cameras_access = TRUE
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.user_camera_access
+      WHERE user_id = auth.uid() AND camera_id = cam_id
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
 -- CAMERAS
-CREATE POLICY "Authenticated users can view cameras"
-  ON public.cameras FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Users can view accessible cameras"
+  ON public.cameras FOR SELECT TO authenticated
+  USING (public.can_access_camera(id));
 CREATE POLICY "Admins can manage cameras"
   ON public.cameras FOR ALL TO authenticated
   USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ALERTS (inserts from service_role bypass RLS)
-CREATE POLICY "Authenticated users can view alerts"
-  ON public.alerts FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY "Users can view alerts for accessible cameras"
+  ON public.alerts FOR SELECT TO authenticated
+  USING (public.can_access_camera(camera_id));
 CREATE POLICY "Authenticated users can update alerts"
   ON public.alerts FOR UPDATE TO authenticated
   USING (TRUE) WITH CHECK (TRUE);
@@ -183,7 +218,7 @@ CREATE POLICY "Users can manage own notification prefs"
   ON public.notification_preferences FOR ALL TO authenticated
   USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
--- 2g. Service status (heartbeat from analyzers)
+-- 2i. Service status (heartbeat from analyzers)
 CREATE TABLE public.service_status (
   service_id        TEXT PRIMARY KEY,
   last_heartbeat    TIMESTAMPTZ NOT NULL,

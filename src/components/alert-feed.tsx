@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAlerts } from "@/lib/hooks/use-alerts";
 import { useUser } from "@/lib/hooks/use-user";
+import { useAllowedCameras } from "@/lib/hooks/use-allowed-cameras";
 import { AlertCard } from "@/components/alert-card";
 import { AlertFilters } from "@/components/alert-filters";
 import { StatsBar } from "@/components/stats-bar";
@@ -22,15 +23,17 @@ export function AlertFeed() {
   const [selectMode, setSelectMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const { user, isAdmin } = useUser();
+  const { allowedCameraIds } = useAllowedCameras();
+
   const { alerts, acknowledgedIds, totalCount, loading, loadingMore, hasMore, loadMore, refetch } = useAlerts({
     cameras: filters.cameras.length > 0 ? filters.cameras : undefined,
     severities: filters.severities.length > 0 ? filters.severities : undefined,
     starred: filters.starFilter === "starred" ? true : undefined,
     sortBy: filters.sortBy,
     sortOrder: filters.sortBy === "severity_num" ? "desc" : "desc",
+    allowedCameraIds,
   });
-
-  const { user, isAdmin } = useUser();
   const supabase = createClient();
 
   const filteredAlerts = alerts.filter((alert) => {

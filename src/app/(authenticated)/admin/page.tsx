@@ -1,21 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
+import { UserTable } from "@/components/admin/user-table";
 
 export default async function AdminPage() {
   const supabase = await createClient();
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("created_at");
-
-  const { count: alertCount } = await supabase
-    .from("alerts")
-    .select("*", { count: "exact", head: true });
-
-  const { count: cameraCount } = await supabase
-    .from("cameras")
-    .select("*", { count: "exact", head: true })
-    .eq("is_enabled", true);
+  const [
+    { data: profiles },
+    { count: alertCount },
+    { data: cameras },
+    { data: cameraAccess },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").order("created_at"),
+    supabase.from("alerts").select("*", { count: "exact", head: true }),
+    supabase.from("cameras").select("*").eq("is_enabled", true).order("id"),
+    supabase.from("user_camera_access").select("user_id, camera_id"),
+  ]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -24,41 +23,20 @@ export default async function AdminPage() {
       {/* System stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <StatCard label="Active Alerts" value={alertCount ?? 0} />
-        <StatCard label="Cameras" value={cameraCount ?? 0} />
+        <StatCard label="Cameras" value={cameras?.length ?? 0} />
         <StatCard label="Users" value={profiles?.length ?? 0} />
       </div>
 
       {/* User management */}
       <div>
         <h2 className="text-sm font-medium mb-2">Users</h2>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Role</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {profiles?.map((profile) => (
-                <tr key={profile.id} className="border-b border-border last:border-0">
-                  <td className="p-3">{profile.display_name}</td>
-                  <td className="p-3">
-                    <span className="rounded bg-muted px-2 py-0.5 text-xs capitalize">
-                      {profile.role}
-                    </span>
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {new Date(profile.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <UserTable
+          profiles={profiles ?? []}
+          cameras={cameras ?? []}
+          cameraAccess={cameraAccess ?? []}
+        />
         <p className="mt-2 text-xs text-muted-foreground">
-          Manage users via the Supabase Dashboard for now. Full admin UI coming in Phase 2.
+          Click a user row to manage their camera access.
         </p>
       </div>
     </div>

@@ -12,6 +12,8 @@ interface AlertFilters {
   starred?: boolean;
   sortBy?: "captured_at" | "severity_num";
   sortOrder?: "asc" | "desc";
+  /** Camera IDs the user can access (null = all). Used to filter realtime events that bypass RLS. */
+  allowedCameraIds?: string[] | null;
 }
 
 export function useAlerts(filters: AlertFilters = {}) {
@@ -91,6 +93,11 @@ export function useAlerts(filters: AlertFilters = {}) {
   // Realtime subscription — stable client ref, runs once
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type Payload = any;
+  const allowedRef = useRef(filters.allowedCameraIds);
+  useEffect(() => {
+    allowedRef.current = filters.allowedCameraIds;
+  }, [filters.allowedCameraIds]);
+
   useEffect(() => {
     const channel = supabase
       .channel("vigil-alerts")
@@ -99,6 +106,9 @@ export function useAlerts(filters: AlertFilters = {}) {
         { event: "INSERT", schema: "public", table: "alerts" },
         (payload: Payload) => {
           const newAlert = payload.new as Alert;
+          // Realtime bypasses RLS — filter by allowed cameras
+          const allowed = allowedRef.current;
+          if (allowed !== null && allowed !== undefined && !allowed.includes(newAlert.camera_id)) return;
           setAlerts((prev) => [newAlert, ...prev]);
           setTotalCount((prev) => prev + 1);
         },

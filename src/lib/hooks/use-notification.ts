@@ -3,17 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/hooks/use-user";
+import { useAllowedCameras } from "@/lib/hooks/use-allowed-cameras";
 import { getSeverityConfig } from "@/lib/utils/severity";
-import { getAlertImageUrl } from "@/lib/utils/images";
 import type { Alert } from "@/types";
 
 export function useNotification() {
   const { user } = useUser();
+  const { allowedCameraIds } = useAllowedCameras();
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [threshold, setThreshold] = useState(3);
   const [enabled, setEnabled] = useState(false);
   const supabase = createClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const allowedRef = useRef(allowedCameraIds);
 
   // Load preferences
   useEffect(() => {
@@ -35,6 +37,11 @@ export function useNotification() {
       });
   }, [user]);
 
+  // Sync allowed cameras ref for use in realtime callback
+  useEffect(() => {
+    allowedRef.current = allowedCameraIds;
+  }, [allowedCameraIds]);
+
   // Subscribe to new alerts for notifications
   useEffect(() => {
     if (!enabled || permission !== "granted") return;
@@ -47,6 +54,9 @@ export function useNotification() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (payload: any) => {
           const alert = payload.new as Alert;
+          // Realtime bypasses RLS — filter by allowed cameras
+          const allowed = allowedRef.current;
+          if (allowed !== null && !allowed.includes(alert.camera_id)) return;
           if (alert.severity_num >= threshold) {
             showNotification(alert);
           }

@@ -60,8 +60,14 @@ export interface Profile {
   id: string;
   display_name: string;
   role: UserRole;
+  all_cameras_access: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface UserCameraAccess {
+  user_id: string;
+  camera_id: string;
 }
 
 export interface ServiceStatus {
