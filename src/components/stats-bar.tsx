@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getSeverityConfig } from "@/lib/utils/severity";
 import { cn } from "@/lib/utils";
 
 export function StatsBar({ totalCount }: { totalCount: number }) {
   const [severityCounts, setSeverityCounts] = useState<number[]>([0, 0, 0, 0, 0, 0]);
+  const [starredCount, setStarredCount] = useState(0);
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
@@ -20,8 +22,16 @@ export function StatsBar({ totalCount }: { totalCount: number }) {
           .eq("severity_num", sev);
         counts[sev] = count ?? 0;
       });
-      await Promise.all(promises);
+      const starredPromise = supabase
+        .from("alerts")
+        .select("*", { count: "exact", head: true })
+        .eq("starred", true);
+      const [, { count: starred }] = await Promise.all([
+        Promise.all(promises),
+        starredPromise,
+      ]);
       setSeverityCounts(counts);
+      setStarredCount(starred ?? 0);
     }
     fetchCounts();
 
@@ -60,6 +70,17 @@ export function StatsBar({ totalCount }: { totalCount: number }) {
           );
         })}
       </div>
+      {starredCount > 0 && (
+        <>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-1">
+            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+            <span className="text-xs font-medium text-yellow-400">
+              {starredCount}
+            </span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
