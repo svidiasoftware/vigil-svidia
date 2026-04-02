@@ -13,12 +13,12 @@ function getStatusColor(service: ServiceStatus) {
   return "bg-red-500";
 }
 
-function getWorstColor(services: ServiceStatus[]) {
+function getBestColor(services: ServiceStatus[]) {
   if (services.length === 0) return "bg-muted-foreground/50";
   const colors = services.map(getStatusColor);
-  if (colors.includes("bg-red-500")) return "bg-red-500";
+  if (colors.includes("bg-green-500")) return "bg-green-500";
   if (colors.includes("bg-yellow-500")) return "bg-yellow-500";
-  return "bg-green-500";
+  return "bg-red-500";
 }
 
 export function SystemStatus() {
@@ -88,7 +88,7 @@ export function SystemStatus() {
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        <div className={`h-2 w-2 rounded-full ${getWorstColor(services)}`} />
+        <div className={`h-2 w-2 rounded-full ${getBestColor(services)}`} />
         <span>
           {lastAlert ? `Last alert: ${timeAgo(lastAlert)}` : "No alerts"}
           {cameraCount > 0 && ` | ${cameraCount} cam`}
