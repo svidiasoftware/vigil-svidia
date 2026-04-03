@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { getSeverityConfig } from "@/lib/utils/severity";
 import { cn } from "@/lib/utils";
-import type { Camera } from "@/types";
+import type { AlertEventStatus, Camera } from "@/types";
 
 interface FiltersState {
   cameras: string[];
@@ -20,6 +20,9 @@ interface FiltersState {
   sortBy: "captured_at" | "severity_num";
   ackFilter: "all" | "ack" | "unack";
   starFilter: "all" | "starred";
+  analyzerModel: string | null;
+  analyzerHost: string | null;
+  eventStatus: AlertEventStatus | null;
 }
 
 interface AlertFiltersProps {
@@ -27,8 +30,18 @@ interface AlertFiltersProps {
   onChange: (filters: FiltersState) => void;
 }
 
+const EVENT_STATUS_LABELS: Record<AlertEventStatus, string> = {
+  new: "New",
+  recurring: "Recurring",
+  cleared: "Cleared",
+  changed: "Changed",
+  known: "Known",
+};
+
 export function AlertFilters({ value, onChange }: AlertFiltersProps) {
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+  const [hosts, setHosts] = useState<string[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
@@ -40,6 +53,27 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
       .then(({ data }: { data: Camera[] | null }) => {
         if (data) setCameras(data);
       });
+
+    // Fetch distinct analyzer models and hosts from both alerts and registered services
+    Promise.all([
+      supabase.from("alerts").select("analyzer_model").not("analyzer_model", "is", null),
+      supabase.from("service_status").select("model").not("model", "is", null),
+    ]).then(([alertRes, serviceRes]) => {
+      const fromAlerts = (alertRes.data as { analyzer_model: string }[] | null)?.map((r) => r.analyzer_model) ?? [];
+      const fromServices = (serviceRes.data as { model: string }[] | null)?.map((r) => r.model) ?? [];
+      const unique = [...new Set([...fromAlerts, ...fromServices])].sort();
+      setModels(unique);
+    });
+
+    Promise.all([
+      supabase.from("alerts").select("analyzer_host").not("analyzer_host", "is", null),
+      supabase.from("service_status").select("hostname").not("hostname", "is", null),
+    ]).then(([alertRes, serviceRes]) => {
+      const fromAlerts = (alertRes.data as { analyzer_host: string }[] | null)?.map((r) => r.analyzer_host) ?? [];
+      const fromServices = (serviceRes.data as { hostname: string }[] | null)?.map((r) => r.hostname) ?? [];
+      const unique = [...new Set([...fromAlerts, ...fromServices])].sort();
+      setHosts(unique);
+    });
   }, []);
 
   function toggleSeverity(sev: number) {
@@ -57,7 +91,7 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
     }
   }
 
-  const hasFilters = value.cameras.length > 0 || value.severities.length > 0 || value.ackFilter !== "all" || value.starFilter !== "all";
+  const hasFilters = value.cameras.length > 0 || value.severities.length > 0 || value.ackFilter !== "all" || value.starFilter !== "all" || value.analyzerModel !== null || value.analyzerHost !== null || value.eventStatus !== null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -103,21 +137,6 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
         })}
       </div>
 
-      {/* Acknowledged filter */}
-      <Select
-        value={value.ackFilter}
-        onValueChange={(v) => onChange({ ...value, ackFilter: v as FiltersState["ackFilter"] })}
-      >
-        <SelectTrigger className="w-[140px] h-8 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All status</SelectItem>
-          <SelectItem value="unack">Unacknowledged</SelectItem>
-          <SelectItem value="ack">Acknowledged</SelectItem>
-        </SelectContent>
-      </Select>
-
       {/* Starred filter */}
       <button
         onClick={() => onChange({ ...value, starFilter: value.starFilter === "all" ? "starred" : "all" })}
@@ -134,6 +153,79 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
         </svg>
         Starred
       </button>
+
+      {/* Acknowledged filter */}
+      <Select
+        value={value.ackFilter}
+        onValueChange={(v) => onChange({ ...value, ackFilter: v as FiltersState["ackFilter"] })}
+      >
+        <SelectTrigger className="w-[140px] h-8 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All status</SelectItem>
+          <SelectItem value="unack">Unacknowledged</SelectItem>
+          <SelectItem value="ack">Acknowledged</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* AI Model filter */}
+      {models.length > 0 && (
+        <Select
+          value={value.analyzerModel || "all"}
+          onValueChange={(v) => onChange({ ...value, analyzerModel: v === "all" ? null : v })}
+        >
+          <SelectTrigger className="w-[300px] h-8 text-xs">
+            <SelectValue placeholder="All models" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All models</SelectItem>
+            {models.map((m) => (
+              <SelectItem key={m} value={m} title={m}>
+                {m}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Host filter */}
+      {hosts.length > 0 && (
+        <Select
+          value={value.analyzerHost || "all"}
+          onValueChange={(v) => onChange({ ...value, analyzerHost: v === "all" ? null : v })}
+        >
+          <SelectTrigger className="w-[160px] h-8 text-xs">
+            <SelectValue placeholder="All hosts" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All hosts</SelectItem>
+            {hosts.map((h) => (
+              <SelectItem key={h} value={h}>
+                {h}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Event status filter */}
+      <Select
+        value={value.eventStatus || "all"}
+        onValueChange={(v) => onChange({ ...value, eventStatus: v === "all" ? null : v as AlertEventStatus })}
+      >
+        <SelectTrigger className="w-[130px] h-8 text-xs">
+          <SelectValue placeholder="All events" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All events</SelectItem>
+          {(Object.entries(EVENT_STATUS_LABELS) as [AlertEventStatus, string][]).map(([key, label]) => (
+            <SelectItem key={key} value={key}>
+              {label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Sort */}
       <Select
@@ -155,7 +247,7 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
           variant="ghost"
           size="sm"
           className="h-8 text-xs"
-          onClick={() => onChange({ cameras: [], severities: [], sortBy: "captured_at", ackFilter: "all", starFilter: "all" })}
+          onClick={() => onChange({ cameras: [], severities: [], sortBy: "captured_at", ackFilter: "all", starFilter: "all", analyzerModel: null, analyzerHost: null, eventStatus: null })}
         >
           Clear
         </Button>

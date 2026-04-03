@@ -18,6 +18,9 @@ export function AlertFeed() {
     sortBy: "captured_at" as "captured_at" | "severity_num",
     ackFilter: "all" as "all" | "ack" | "unack",
     starFilter: "all" as "all" | "starred",
+    analyzerModel: null as string | null,
+    analyzerHost: null as string | null,
+    eventStatus: null as import("@/types").AlertEventStatus | null,
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
@@ -30,6 +33,9 @@ export function AlertFeed() {
     cameras: filters.cameras.length > 0 ? filters.cameras : undefined,
     severities: filters.severities.length > 0 ? filters.severities : undefined,
     starred: filters.starFilter === "starred" ? true : undefined,
+    analyzerModel: filters.analyzerModel ?? undefined,
+    analyzerHost: filters.analyzerHost ?? undefined,
+    eventStatus: filters.eventStatus ?? undefined,
     sortBy: filters.sortBy,
     sortOrder: filters.sortBy === "severity_num" ? "desc" : "desc",
     allowedCameraIds,

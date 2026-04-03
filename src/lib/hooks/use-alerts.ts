@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Alert, AlertAcknowledgment } from "@/types";
+import type { Alert, AlertAcknowledgment, AlertEventStatus } from "@/types";
 
 const PAGE_SIZE = 20;
 
@@ -10,6 +10,9 @@ interface AlertFilters {
   cameras?: string[];
   severities?: number[];
   starred?: boolean;
+  analyzerModel?: string;
+  analyzerHost?: string;
+  eventStatus?: AlertEventStatus;
   sortBy?: "captured_at" | "severity_num";
   sortOrder?: "asc" | "desc";
   /** Camera IDs the user can access (null = all). Used to filter realtime events that bypass RLS. */
@@ -51,6 +54,15 @@ export function useAlerts(filters: AlertFilters = {}) {
     if (filters.starred) {
       query = query.eq("starred", true);
     }
+    if (filters.analyzerModel) {
+      query = query.eq("analyzer_model", filters.analyzerModel);
+    }
+    if (filters.analyzerHost) {
+      query = query.eq("analyzer_host", filters.analyzerHost);
+    }
+    if (filters.eventStatus) {
+      query = query.eq("event_status", filters.eventStatus);
+    }
 
     const { data, error, count } = await query;
     if (!error && data) {
@@ -64,7 +76,7 @@ export function useAlerts(filters: AlertFilters = {}) {
     }
     setLoading(false);
     setLoadingMore(false);
-  }, [filters.cameras, filters.severities, filters.starred, filters.sortBy, filters.sortOrder]);
+  }, [filters.cameras, filters.severities, filters.starred, filters.analyzerModel, filters.analyzerHost, filters.eventStatus, filters.sortBy, filters.sortOrder]);
 
   const fetchAcks = useCallback(async () => {
     const { data } = await supabase
