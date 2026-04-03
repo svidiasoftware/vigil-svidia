@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { KeyRound } from "lucide-react";
 import { UserCameraDialog } from "@/components/admin/user-camera-dialog";
+import { SetPasswordDialog } from "@/components/admin/set-password-dialog";
 import type { Camera, Profile, UserCameraAccess } from "@/types";
 
 interface UserTableProps {
@@ -20,6 +22,7 @@ function accessSummary(profile: Profile, cameraAccess: UserCameraAccess[]): stri
 
 export function UserTable({ profiles, cameras, cameraAccess: initialAccess }: UserTableProps) {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [passwordProfile, setPasswordProfile] = useState<Profile | null>(null);
   const [cameraAccess, setCameraAccess] = useState(initialAccess);
   const [profileList, setProfileList] = useState(profiles);
 
@@ -47,6 +50,7 @@ export function UserTable({ profiles, cameras, cameraAccess: initialAccess }: Us
               <th className="text-left p-3 font-medium text-muted-foreground">Role</th>
               <th className="text-left p-3 font-medium text-muted-foreground">Cameras</th>
               <th className="text-left p-3 font-medium text-muted-foreground">Joined</th>
+              <th className="p-3 w-10" />
             </tr>
           </thead>
           <tbody>
@@ -68,6 +72,19 @@ export function UserTable({ profiles, cameras, cameraAccess: initialAccess }: Us
                 <td className="p-3 text-muted-foreground">
                   {new Date(profile.created_at).toLocaleDateString()}
                 </td>
+                <td className="p-3">
+                  <button
+                    type="button"
+                    title="Set password"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPasswordProfile(profile);
+                    }}
+                    className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -83,6 +100,16 @@ export function UserTable({ profiles, cameras, cameraAccess: initialAccess }: Us
             if (!open) setSelectedProfile(null);
           }}
           onSaved={handleSaved}
+        />
+      )}
+
+      {passwordProfile && (
+        <SetPasswordDialog
+          profile={passwordProfile}
+          open={!!passwordProfile}
+          onOpenChange={(open) => {
+            if (!open) setPasswordProfile(null);
+          }}
         />
       )}
     </>
