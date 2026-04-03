@@ -66,7 +66,7 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
         value={value.cameras[0] || "all"}
         onValueChange={setCamera}
       >
-        <SelectTrigger className="w-[180px] h-8 text-xs">
+        <SelectTrigger className="w-[300px] h-8 text-xs">
           <SelectValue placeholder="All cameras" />
         </SelectTrigger>
         <SelectContent>
