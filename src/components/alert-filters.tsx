@@ -73,7 +73,7 @@ export function AlertFilters({ value, onChange }: AlertFiltersProps) {
           <SelectItem value="all">All cameras</SelectItem>
           {cameras.map((cam) => (
             <SelectItem key={cam.id} value={cam.id}>
-              {cam.display_name || cam.id}
+              {cam.id}
             </SelectItem>
           ))}
         </SelectContent>

@@ -36,7 +36,7 @@ export function CameraGrid({
               {latest ? (
                 <img
                   src={getAlertImageUrl(latest.image_path, 320)}
-                  alt={camera.display_name || camera.id}
+                  alt={camera.id}
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
@@ -50,11 +50,10 @@ export function CameraGrid({
             <div className="p-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium truncate">
-                  {camera.display_name || camera.id}
+                  {camera.id}
                 </p>
                 <div className="h-2 w-2 rounded-full bg-green-500" title="Active" />
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{camera.id}</p>
               <div className="mt-2 flex items-center justify-between">
                 {latest ? (
                   <>

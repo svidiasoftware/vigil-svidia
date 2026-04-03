@@ -153,9 +153,6 @@ export function UserCameraDialog({
                         className="h-3.5 w-3.5 rounded border-muted-foreground/40 accent-primary"
                       />
                       <span className="text-sm truncate">
-                        {camera.display_name || camera.id}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
                         {camera.id}
                       </span>
                     </label>
