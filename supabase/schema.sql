@@ -101,10 +101,12 @@ CREATE TABLE public.silence_rules (
 
 -- 2h. Notification preferences (per-user)
 CREATE TABLE public.notification_preferences (
-  user_id             UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  severity_threshold  SMALLINT NOT NULL DEFAULT 3,
-  browser_enabled     BOOLEAN NOT NULL DEFAULT FALSE,
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+  user_id                  UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  severity_threshold       SMALLINT NOT NULL DEFAULT 3,
+  browser_enabled          BOOLEAN NOT NULL DEFAULT FALSE,
+  email_enabled            BOOLEAN NOT NULL DEFAULT FALSE,
+  email_severity_threshold SMALLINT NOT NULL DEFAULT 3 CHECK (email_severity_threshold BETWEEN 3 AND 5),
+  updated_at               TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ============================================================
@@ -282,3 +284,38 @@ INSERT INTO public.cameras (id, display_name) VALUES
   ('cctv-svc-001-C_St-TacD_Parkin-c5', 'SVC-001 C St Tac D Parking'),
   ('cctv-svc-001-E_26th_LP-c6', 'SVC-001 E 26th LP')
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 8. ANALYZER HELPERS
+-- ============================================================
+
+-- Returns all users with email notifications enabled,
+-- their email, severity threshold, and accessible camera IDs.
+-- Intended to be called by the analyzer via service_role key.
+CREATE OR REPLACE FUNCTION public.get_email_notification_recipients()
+RETURNS TABLE (
+  user_id              UUID,
+  email                TEXT,
+  display_name         TEXT,
+  email_severity_threshold SMALLINT,
+  camera_ids           TEXT[]
+) AS $$
+  SELECT
+    np.user_id,
+    u.email,
+    p.display_name,
+    np.email_severity_threshold,
+    CASE
+      WHEN p.role = 'admin' OR p.all_cameras_access = TRUE THEN
+        (SELECT array_agg(c.id) FROM public.cameras c WHERE c.is_enabled = TRUE)
+      ELSE
+        (SELECT array_agg(uca.camera_id)
+         FROM public.user_camera_access uca
+         JOIN public.cameras c ON c.id = uca.camera_id AND c.is_enabled = TRUE
+         WHERE uca.user_id = np.user_id)
+    END AS camera_ids
+  FROM public.notification_preferences np
+  JOIN auth.users u ON u.id = np.user_id
+  JOIN public.profiles p ON p.id = np.user_id
+  WHERE np.email_enabled = TRUE;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;

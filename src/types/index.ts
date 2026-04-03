@@ -84,5 +84,7 @@ export interface NotificationPreferences {
   user_id: string;
   severity_threshold: number;
   browser_enabled: boolean;
+  email_enabled: boolean;
+  email_severity_threshold: number;
   updated_at: string;
 }

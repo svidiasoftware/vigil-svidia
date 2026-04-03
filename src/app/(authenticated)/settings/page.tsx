@@ -18,6 +18,8 @@ export default function SettingsPage() {
   const supabase = createClient();
   const [threshold, setThreshold] = useState(3);
   const [browserEnabled, setBrowserEnabled] = useState(false);
+  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [emailThreshold, setEmailThreshold] = useState(3);
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>("default");
   const [saved, setSaved] = useState(false);
 
@@ -28,10 +30,12 @@ export default function SettingsPage() {
       .select("*")
       .eq("user_id", user.id)
       .single()
-      .then(({ data }: { data: { severity_threshold: number; browser_enabled: boolean } | null }) => {
+      .then(({ data }: { data: { severity_threshold: number; browser_enabled: boolean; email_enabled: boolean; email_severity_threshold: number } | null }) => {
         if (data) {
           setThreshold(data.severity_threshold);
           setBrowserEnabled(data.browser_enabled);
+          setEmailEnabled(data.email_enabled);
+          setEmailThreshold(data.email_severity_threshold);
         }
       });
 
@@ -46,6 +50,8 @@ export default function SettingsPage() {
       user_id: user.id,
       severity_threshold: threshold,
       browser_enabled: browserEnabled,
+      email_enabled: emailEnabled,
+      email_severity_threshold: emailThreshold,
       updated_at: new Date().toISOString(),
     });
     setSaved(true);
@@ -108,6 +114,53 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+
+            <Button size="sm" onClick={handleSave}>
+              {saved ? "Saved!" : "Save Preferences"}
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-sm font-medium mb-2">Email Notifications</h2>
+          <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+            <div>
+              <label className="text-xs text-muted-foreground">
+                Receive email notifications for alerts
+              </label>
+              <div className="mt-1">
+                <Button
+                  size="sm"
+                  variant={emailEnabled ? "default" : "outline"}
+                  onClick={() => setEmailEnabled(!emailEnabled)}
+                >
+                  {emailEnabled ? "Enabled" : "Disabled"}
+                </Button>
+              </div>
+            </div>
+
+            {emailEnabled && (
+              <div>
+                <label className="text-xs text-muted-foreground">
+                  Minimum severity for email notifications
+                </label>
+                <Select
+                  value={String(emailThreshold)}
+                  onValueChange={(v) => setEmailThreshold(Number(v))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[3, 4, 5].map((sev) => (
+                      <SelectItem key={sev} value={String(sev)}>
+                        {getSeverityConfig(sev).label} ({sev})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <Button size="sm" onClick={handleSave}>
               {saved ? "Saved!" : "Save Preferences"}
