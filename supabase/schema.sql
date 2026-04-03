@@ -261,16 +261,24 @@ CREATE POLICY "Public read for alert images"
 -- 7. SEED CAMERAS
 -- ============================================================
 INSERT INTO public.cameras (id, display_name) VALUES
-  ('CCTVTR2066-C1', 'Trailer 2066 Cam 1'),
-  ('CCTVTR2066-C2', 'Trailer 2066 Cam 2'),
-  ('CCTVTR2066-C3', 'Trailer 2066 Cam 3'),
-  ('CCTVTR2066-C4', 'Trailer 2066 Cam 4'),
-  ('MOBT-SVCM004-C1', 'Mobile Tower SVC-M004 Cam 1'),
-  ('MOBT-SVCM004-C2', 'Mobile Tower SVC-M004 Cam 2'),
-  ('MOBT-SVCM004-C3', 'Mobile Tower SVC-M004 Cam 3'),
-  ('MOBT-SVCM004-C4', 'Mobile Tower SVC-M004 Cam 4'),
-  ('cctv-svc-001-C9', 'SVC-001 Cam 9'),
-  ('cctv-svc-001-C_St-26st', 'SVC-001 C St & 26th'),
-  ('cctv-svc-001-C_St-TacD_Parkin', 'SVC-001 C St Tac D Parking'),
-  ('cctv-svc-001-E_26th_LP', 'SVC-001 E 26th LP')
+  ('CCTVTR2066-C1-c1', 'Trailer 2066 Cam 1'),
+  ('CCTVTR2066-C2-c2', 'Trailer 2066 Cam 2'),
+  ('CCTVTR2066-C3-c3', 'Trailer 2066 Cam 3'),
+  ('CCTVTR2066-C4-c4', 'Trailer 2066 Cam 4'),
+  ('MOBT-SVCM001-C1-c1', 'Mobile Tower SVC-M001 Cam 1'),
+  ('MOBT-SVCM001-C2-c2', 'Mobile Tower SVC-M001 Cam 2'),
+  ('MOBT-SVCM001-C3-c3', 'Mobile Tower SVC-M001 Cam 3'),
+  ('MOBT-SVCM001-C4-c4', 'Mobile Tower SVC-M001 Cam 4'),
+  ('MOBT-SVCM004-C1-c1', 'Mobile Tower SVC-M004 Cam 1'),
+  ('MOBT-SVCM004-C2-c2', 'Mobile Tower SVC-M004 Cam 2'),
+  ('MOBT-SVCM004-C3-c3', 'Mobile Tower SVC-M004 Cam 3'),
+  ('MOBT-SVCM004-C4-c4', 'Mobile Tower SVC-M004 Cam 4'),
+  ('MOBT-SVCM006-C1-c1', 'Mobile Tower SVC-M006 Cam 1'),
+  ('MOBT-SVCM006-C2-c2', 'Mobile Tower SVC-M006 Cam 2'),
+  ('MOBT-SVCM006-C3-c3', 'Mobile Tower SVC-M006 Cam 3'),
+  ('MOBT-SVCM006-C4-c4', 'Mobile Tower SVC-M006 Cam 4'),
+  ('cctv-svc-001-C9-c9', 'SVC-001 Cam 9'),
+  ('cctv-svc-001-C_St-26st-c4', 'SVC-001 C St & 26th'),
+  ('cctv-svc-001-C_St-TacD_Parkin-c5', 'SVC-001 C St Tac D Parking'),
+  ('cctv-svc-001-E_26th_LP-c6', 'SVC-001 E 26th LP')
 ON CONFLICT (id) DO NOTHING;
