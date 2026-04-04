@@ -2,6 +2,7 @@ import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { NotificationProvider } from "@/components/notification-provider";
+import { UserProvider } from "@/lib/hooks/use-user";
 
 export default function AuthenticatedLayout({
   children,
@@ -9,6 +10,7 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
+    <UserProvider>
     <NotificationProvider>
       <div className="flex h-full flex-col">
         <Header />
@@ -21,5 +23,6 @@ export default function AuthenticatedLayout({
         <MobileNav />
       </div>
     </NotificationProvider>
+    </UserProvider>
   );
 }
