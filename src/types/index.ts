@@ -39,6 +39,7 @@ export interface Camera {
   id: string;
   display_name: string | null;
   location: string | null;
+  image_path: string | null;
   is_fisheye: boolean;
   is_enabled: boolean;
   created_at: string;

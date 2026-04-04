@@ -40,9 +40,16 @@ export function CameraGrid({
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
+              ) : camera.image_path ? (
+                <img
+                  src={getAlertImageUrl(camera.image_path, 320)}
+                  alt={camera.id}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                  No alerts
+                  No image
                 </div>
               )}
             </div>

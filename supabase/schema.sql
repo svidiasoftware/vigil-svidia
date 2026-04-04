@@ -42,6 +42,7 @@ CREATE TABLE public.cameras (
   id            TEXT PRIMARY KEY,
   display_name  TEXT,
   location      TEXT,
+  image_path    TEXT,
   is_fisheye    BOOLEAN NOT NULL DEFAULT FALSE,
   is_enabled    BOOLEAN NOT NULL DEFAULT TRUE,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
