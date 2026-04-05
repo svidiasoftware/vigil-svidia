@@ -124,6 +124,8 @@ export function SystemStatus() {
                       <span className="truncate" title={svc.model || "—"}>
                         {svc.model ? svc.model.split("/").pop() : "—"}
                       </span>
+                      <span>Version</span>
+                      <span>{svc.version || "—"}</span>
                       <span>Images</span>
                       <span>{svc.images_analyzed.toLocaleString()}</span>
                       <span>Alerts</span>

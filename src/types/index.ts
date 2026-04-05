@@ -77,6 +77,7 @@ export interface ServiceStatus {
   status: string;
   hostname: string | null;
   model: string | null;
+  version: string | null;
   images_analyzed: number;
   alerts_count: number;
 }

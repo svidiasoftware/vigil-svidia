@@ -228,6 +228,7 @@ CREATE TABLE public.service_status (
   status            TEXT NOT NULL DEFAULT 'running',
   hostname          TEXT,
   model             TEXT,
+  version           TEXT DEFAULT 'unknown',
   images_analyzed   INTEGER DEFAULT 0,
   alerts_count      INTEGER DEFAULT 0
 );
