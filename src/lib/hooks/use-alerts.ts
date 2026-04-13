@@ -43,6 +43,7 @@ export function useAlerts(filters: AlertFilters = {}) {
       .order(filters.sortBy || "captured_at", {
         ascending: filters.sortOrder === "asc",
       })
+      .order("created_at", { ascending: true })
       .range(from, to);
 
     if (filters.cameras?.length) {
@@ -110,6 +111,13 @@ export function useAlerts(filters: AlertFilters = {}) {
     allowedRef.current = filters.allowedCameraIds;
   }, [filters.allowedCameraIds]);
 
+  const sortByRef = useRef(filters.sortBy);
+  const sortOrderRef = useRef(filters.sortOrder);
+  useEffect(() => {
+    sortByRef.current = filters.sortBy;
+    sortOrderRef.current = filters.sortOrder;
+  }, [filters.sortBy, filters.sortOrder]);
+
   useEffect(() => {
     const channel = supabase
       .channel("vigil-alerts")
@@ -121,7 +129,24 @@ export function useAlerts(filters: AlertFilters = {}) {
           // Realtime bypasses RLS — filter by allowed cameras
           const allowed = allowedRef.current;
           if (allowed !== null && allowed !== undefined && !allowed.includes(newAlert.camera_id)) return;
-          setAlerts((prev) => [newAlert, ...prev]);
+          setAlerts((prev) => {
+            // Insert in sorted position (primary sort + created_at asc tiebreaker)
+            // so local model alerts appear before their cloud-confirm counterparts
+            const sortBy = sortByRef.current || "captured_at";
+            const desc = sortOrderRef.current !== "asc";
+            const idx = prev.findIndex((existing) => {
+              let cmp: number;
+              if (sortBy === "severity_num") {
+                cmp = newAlert.severity_num - existing.severity_num;
+              } else {
+                cmp = new Date(newAlert.captured_at).getTime() - new Date(existing.captured_at).getTime();
+              }
+              if (cmp !== 0) return desc ? cmp > 0 : cmp < 0;
+              return new Date(newAlert.created_at).getTime() < new Date(existing.created_at).getTime();
+            });
+            if (idx === -1) return [...prev, newAlert];
+            return [...prev.slice(0, idx), newAlert, ...prev.slice(idx)];
+          });
           setTotalCount((prev) => prev + 1);
         },
       )
