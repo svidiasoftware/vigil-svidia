@@ -43,7 +43,7 @@ export function useAlerts(filters: AlertFilters = {}) {
       .order(filters.sortBy || "captured_at", {
         ascending: filters.sortOrder === "asc",
       })
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .range(from, to);
 
     if (filters.cameras?.length) {
@@ -130,8 +130,8 @@ export function useAlerts(filters: AlertFilters = {}) {
           const allowed = allowedRef.current;
           if (allowed !== null && allowed !== undefined && !allowed.includes(newAlert.camera_id)) return;
           setAlerts((prev) => {
-            // Insert in sorted position (primary sort + created_at asc tiebreaker)
-            // so local model alerts appear before their cloud-confirm counterparts
+            // Insert in sorted position (primary sort + created_at desc tiebreaker)
+            // so cloud-confirm alerts (created later) appear above their local counterparts
             const sortBy = sortByRef.current || "captured_at";
             const desc = sortOrderRef.current !== "asc";
             const idx = prev.findIndex((existing) => {
@@ -142,7 +142,7 @@ export function useAlerts(filters: AlertFilters = {}) {
                 cmp = new Date(newAlert.captured_at).getTime() - new Date(existing.captured_at).getTime();
               }
               if (cmp !== 0) return desc ? cmp > 0 : cmp < 0;
-              return new Date(newAlert.created_at).getTime() < new Date(existing.created_at).getTime();
+              return new Date(newAlert.created_at).getTime() > new Date(existing.created_at).getTime();
             });
             if (idx === -1) return [...prev, newAlert];
             return [...prev.slice(0, idx), newAlert, ...prev.slice(idx)];
