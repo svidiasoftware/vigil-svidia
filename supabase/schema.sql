@@ -72,6 +72,8 @@ CREATE TABLE public.alerts (
   source_filename   TEXT,
   false_positive    BOOLEAN NOT NULL DEFAULT FALSE,
   starred           BOOLEAN NOT NULL DEFAULT FALSE,
+  agent_reviewed_at TIMESTAMPTZ,
+  agent_comment     TEXT,
   analyzer_host     TEXT,
   analyzer_model    TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -118,6 +120,9 @@ CREATE INDEX idx_alerts_captured_at       ON public.alerts (captured_at DESC);
 CREATE INDEX idx_alerts_camera_captured   ON public.alerts (camera_id, captured_at DESC);
 CREATE INDEX idx_alerts_severity_captured ON public.alerts (severity_num DESC, captured_at DESC);
 CREATE INDEX idx_alerts_created_at        ON public.alerts (created_at);
+CREATE INDEX alerts_unreviewed_captured_idx
+  ON public.alerts (captured_at DESC)
+  WHERE agent_reviewed_at IS NULL;
 CREATE INDEX idx_ack_alert_id            ON public.alert_acknowledgments (alert_id);
 CREATE INDEX idx_silence_active          ON public.silence_rules (is_active) WHERE is_active = TRUE;
 
