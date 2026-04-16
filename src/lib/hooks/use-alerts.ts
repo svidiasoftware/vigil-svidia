@@ -10,6 +10,7 @@ interface AlertFilters {
   cameras?: string[];
   severities?: number[];
   starred?: boolean;
+  agentHighlighted?: boolean;
   analyzerModel?: string;
   analyzerHost?: string;
   eventStatus?: AlertEventStatus;
@@ -55,6 +56,9 @@ export function useAlerts(filters: AlertFilters = {}) {
     if (filters.starred) {
       query = query.eq("starred", true);
     }
+    if (filters.agentHighlighted) {
+      query = query.not("agent_comment", "is", null);
+    }
     if (filters.analyzerModel) {
       query = query.eq("analyzer_model", filters.analyzerModel);
     }
@@ -77,7 +81,7 @@ export function useAlerts(filters: AlertFilters = {}) {
     }
     setLoading(false);
     setLoadingMore(false);
-  }, [filters.cameras, filters.severities, filters.starred, filters.analyzerModel, filters.analyzerHost, filters.eventStatus, filters.sortBy, filters.sortOrder]);
+  }, [filters.cameras, filters.severities, filters.starred, filters.agentHighlighted, filters.analyzerModel, filters.analyzerHost, filters.eventStatus, filters.sortBy, filters.sortOrder]);
 
   const fetchAcks = useCallback(async () => {
     const { data } = await supabase

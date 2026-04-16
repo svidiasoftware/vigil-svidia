@@ -20,6 +20,8 @@ export interface Alert {
   starred: boolean;
   analyzer_host: string | null;
   analyzer_model: string | null;
+  agent_reviewed_at: string | null;
+  agent_comment: string | null;
   created_at: string;
 }
 

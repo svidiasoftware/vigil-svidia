@@ -95,6 +95,15 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
           <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
             {alert.description}
           </p>
+          {alert.agent_comment && (
+            <p
+              className="mt-1 text-xs italic text-yellow-400/90 line-clamp-2"
+              title={alert.agent_comment}
+            >
+              <span className="not-italic font-medium">Agent:</span>{" "}
+              {alert.agent_comment}
+            </p>
+          )}
         </div>
         <div className="flex items-center justify-between mt-1">
           <span className="text-xs text-muted-foreground" title={timeAgo(alert.captured_at)}>
