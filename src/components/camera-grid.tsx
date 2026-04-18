@@ -2,13 +2,14 @@
 
 import { SeverityBadge } from "@/components/severity-badge";
 import { getAlertImageUrl } from "@/lib/utils/images";
-import { formatShort } from "@/lib/utils/date";
+import { formatLocalShort } from "@/lib/utils/date";
 import type { Camera } from "@/types";
 
 interface LatestAlert {
   camera_id: string;
   severity_num: number;
   captured_at: string;
+  captured_at_offset_minutes: number;
   image_path: string;
 }
 
@@ -66,7 +67,7 @@ export function CameraGrid({
                   <>
                     <SeverityBadge severity={latest.severity_num} />
                     <span className="text-xs text-muted-foreground">
-                      {alertCount} alert{alertCount !== 1 ? "s" : ""} | {formatShort(latest.captured_at)}
+                      {alertCount} alert{alertCount !== 1 ? "s" : ""} | {formatLocalShort(latest.captured_at, latest.captured_at_offset_minutes)}
                     </span>
                   </>
                 ) : (

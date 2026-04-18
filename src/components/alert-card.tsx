@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { SeverityBadge } from "@/components/severity-badge";
-import { formatShort, timeAgo } from "@/lib/utils/date";
+import { formatLocalShort, timeAgo } from "@/lib/utils/date";
 import { getAlertImageUrl } from "@/lib/utils/images";
 import { getSeverityConfig } from "@/lib/utils/severity";
 import type { Alert } from "@/types";
@@ -107,7 +107,7 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
         </div>
         <div className="flex items-center justify-between mt-1">
           <span className="text-xs text-muted-foreground" title={timeAgo(alert.captured_at)}>
-            {formatShort(alert.captured_at)}
+            {formatLocalShort(alert.captured_at, alert.captured_at_offset_minutes)}
           </span>
           <span className="text-xs text-muted-foreground">
             {alert.confidence}% confidence

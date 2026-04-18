@@ -7,7 +7,7 @@ import { useUser } from "@/lib/hooks/use-user";
 import { SeverityBadge } from "@/components/severity-badge";
 import { Button } from "@/components/ui/button";
 import { getAlertImageUrl } from "@/lib/utils/images";
-import { formatTimestamp, timeAgo } from "@/lib/utils/date";
+import { formatTimestamp, formatLocalFull, timeAgo } from "@/lib/utils/date";
 import type { Alert } from "@/types";
 
 interface AckWithProfile {
@@ -77,7 +77,7 @@ export function AlertDetail({
         </MetaField>
         <MetaField label="Confidence" value={`${alert.confidence}%`} />
         <MetaField label="Status" value={alert.event_status} />
-        <MetaField label="Time" value={formatTimestamp(alert.captured_at)} />
+        <MetaField label="Time" value={formatLocalFull(alert.captured_at, alert.captured_at_offset_minutes)} />
         <MetaField label="Relative" value={timeAgo(alert.captured_at)} />
         {alert.consecutive_count > 1 && (
           <MetaField label="Consecutive" value={`${alert.consecutive_count} cycles`} />

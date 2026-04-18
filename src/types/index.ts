@@ -6,6 +6,7 @@ export interface Alert {
   id: string;
   camera_id: string;
   captured_at: string;
+  captured_at_offset_minutes: number;
   confidence: number;
   severity: AlertSeverity;
   severity_num: number;

@@ -13,10 +13,10 @@ export default async function CamerasPage() {
   // Get latest alert per camera
   const { data: latestAlerts } = await supabase
     .from("alerts")
-    .select("camera_id, severity_num, captured_at, image_path")
+    .select("camera_id, severity_num, captured_at, captured_at_offset_minutes, image_path")
     .order("captured_at", { ascending: false });
 
-  type LatestAlert = { camera_id: string; severity_num: number; captured_at: string; image_path: string };
+  type LatestAlert = { camera_id: string; severity_num: number; captured_at: string; captured_at_offset_minutes: number; image_path: string };
   const alertsByCamera = new Map<string, LatestAlert[]>();
   for (const alert of (latestAlerts || []) as LatestAlert[]) {
     if (!alertsByCamera.has(alert.camera_id)) {

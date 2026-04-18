@@ -60,6 +60,7 @@ CREATE TABLE public.alerts (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   camera_id         TEXT NOT NULL REFERENCES public.cameras(id),
   captured_at       TIMESTAMPTZ NOT NULL,
+  captured_at_offset_minutes SMALLINT NOT NULL DEFAULT 0,
   confidence        SMALLINT NOT NULL CHECK (confidence BETWEEN 0 AND 100),
   severity          alert_severity NOT NULL DEFAULT 'normal',
   severity_num      SMALLINT NOT NULL DEFAULT 0 CHECK (severity_num BETWEEN 0 AND 5),
