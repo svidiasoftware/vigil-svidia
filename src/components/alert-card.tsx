@@ -26,12 +26,12 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
     <Link
       href={`/dashboard/alert/${alert.id}`}
       className={cn(
-        "group flex gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/50",
+        "group flex flex-col sm:flex-row gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/50",
         acknowledged ? "border-border/50 opacity-60" : config.border,
       )}
     >
       {/* Thumbnail */}
-      <div className="relative h-28 w-44 sm:h-32 sm:w-52 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+      <div className="relative aspect-video w-full sm:h-32 sm:w-52 sm:aspect-auto flex-shrink-0 overflow-hidden rounded-md bg-muted">
         <img
           src={getAlertImageUrl(alert.image_path, 480)}
           alt={`Alert from ${alert.camera_id}`}
@@ -116,7 +116,7 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
       </div>
 
       {/* Action buttons */}
-      <div className="flex flex-col gap-1 flex-shrink-0 self-center opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="hidden sm:flex flex-col gap-1 flex-shrink-0 self-center opacity-0 transition-opacity group-hover:opacity-100">
         {onStar && (
           <button
             onClick={(e) => {
