@@ -23,6 +23,7 @@ export interface Alert {
   analyzer_model: string | null;
   agent_reviewed_at: string | null;
   agent_comment: string | null;
+  prompt: string | null;
   created_at: string;
 }
 
@@ -92,4 +93,39 @@ export interface NotificationPreferences {
   email_enabled: boolean;
   email_severity_threshold: number;
   updated_at: string;
+}
+
+export type AlertLifecycleEventType =
+  | "local_inference"
+  | "known_similarity_check"
+  | "known_similarity_override"
+  | "cloud_confirm_start"
+  | "cloud_confirm_attempt"
+  | "cloud_confirm_result"
+  | "deferred_resolve"
+  | "known_override_fire"
+  | "alert_inserted"
+  | "alert_insert_failed"
+  | "alert_queue_retry"
+  | "agent_review_tier1"
+  | "agent_review_tier2"
+  | "agent_review_applied"
+  | "agent_escalation_email"
+  | "surveillance_agent_decision";
+
+export interface AlertLifecycleEvent {
+  id: string;
+  alert_id: string | null;
+  camera_id: string | null;
+  source_filename: string | null;
+  event_type: AlertLifecycleEventType;
+  created_at: string;
+  model: string | null;
+  severity_num: number | null;
+  latency_ms: number | null;
+  cost_usd: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  error: string | null;
+  details: Record<string, unknown>;
 }

@@ -10,18 +10,27 @@ export default async function AlertDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: alert } = await supabase
-    .from("alerts")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [{ data: alert }, { data: acks }, { data: events }] = await Promise.all([
+    supabase.from("alerts").select("*").eq("id", id).single(),
+    supabase
+      .from("alert_acknowledgments")
+      .select("*, profiles:user_id(display_name)")
+      .eq("alert_id", id),
+    supabase
+      .from("alert_lifecycle_events")
+      .select("*")
+      .eq("alert_id", id)
+      .order("created_at", { ascending: true })
+      .limit(200),
+  ]);
 
   if (!alert) notFound();
 
-  const { data: acks } = await supabase
-    .from("alert_acknowledgments")
-    .select("*, profiles:user_id(display_name)")
-    .eq("alert_id", id);
-
-  return <AlertDetail alert={alert} acknowledgments={acks || []} />;
+  return (
+    <AlertDetail
+      alert={alert}
+      acknowledgments={acks || []}
+      events={events || []}
+    />
+  );
 }

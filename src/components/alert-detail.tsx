@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/hooks/use-user";
 import { SeverityBadge } from "@/components/severity-badge";
+import { AlertLifecycleTimeline } from "@/components/alert-lifecycle-timeline";
 import { Button } from "@/components/ui/button";
 import { getAlertImageUrl } from "@/lib/utils/images";
 import { formatTimestamp, formatLocalFull, timeAgo } from "@/lib/utils/date";
-import type { Alert } from "@/types";
+import type { Alert, AlertLifecycleEvent } from "@/types";
 
 interface AckWithProfile {
   id: string;
@@ -22,9 +23,11 @@ interface AckWithProfile {
 export function AlertDetail({
   alert,
   acknowledgments,
+  events = [],
 }: {
   alert: Alert;
   acknowledgments: AckWithProfile[];
+  events?: AlertLifecycleEvent[];
 }) {
   const [acks, setAcks] = useState(acknowledgments);
   const [acking, setAcking] = useState(false);
@@ -174,6 +177,12 @@ export function AlertDetail({
           </div>
         </div>
       )}
+
+      <AlertLifecycleTimeline
+        events={events}
+        acknowledgments={acks}
+        alert={alert}
+      />
     </div>
   );
 }
