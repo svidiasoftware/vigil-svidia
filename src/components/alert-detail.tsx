@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/hooks/use-user";
+import { AlertImage } from "@/components/alert-image";
 import { SeverityBadge } from "@/components/severity-badge";
 import { AlertLifecycleTimeline } from "@/components/alert-lifecycle-timeline";
 import { Button } from "@/components/ui/button";
-import { getAlertImageUrl } from "@/lib/utils/images";
 import { formatTimestamp, formatLocalFull, timeAgo } from "@/lib/utils/date";
 import type { Alert, AlertLifecycleEvent } from "@/types";
 
@@ -65,10 +65,11 @@ export function AlertDetail({
 
       {/* Image */}
       <div className="overflow-hidden rounded-lg border border-border bg-muted">
-        <img
-          src={getAlertImageUrl(alert.image_path)}
-          alt={`Alert from ${alert.camera_id}`}
+        <AlertImage
+          imagePath={alert.image_path}
+          cameraId={alert.camera_id}
           className="w-full"
+          loading="eager"
         />
       </div>
 

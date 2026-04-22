@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { AlertImage } from "@/components/alert-image";
 import { SeverityBadge } from "@/components/severity-badge";
 import { formatLocalShort, timeAgo } from "@/lib/utils/date";
-import { getAlertImageUrl } from "@/lib/utils/images";
 import { getSeverityConfig } from "@/lib/utils/severity";
 import type { Alert } from "@/types";
 
@@ -32,11 +32,11 @@ export function AlertCard({ alert, acknowledged, onAcknowledge, onFilterCamera, 
     >
       {/* Thumbnail */}
       <div className="relative aspect-video w-full sm:h-32 sm:w-52 sm:aspect-auto flex-shrink-0 overflow-hidden rounded-md bg-muted">
-        <img
-          src={getAlertImageUrl(alert.image_path, 480)}
-          alt={`Alert from ${alert.camera_id}`}
+        <AlertImage
+          imagePath={alert.image_path}
+          cameraId={alert.camera_id}
+          width={480}
           className="h-full w-full object-cover"
-          loading="lazy"
         />
         {alert.consecutive_count > 1 && (
           <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium text-white">
