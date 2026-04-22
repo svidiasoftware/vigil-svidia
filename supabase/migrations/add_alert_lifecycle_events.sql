@@ -7,6 +7,14 @@
 -- is nullable because pre-insert events (local_inference, known_similarity_*,
 -- cloud_confirm_*) run before the alerts row exists, and some never result
 -- in an insert at all (severity 0).
+--
+-- alert_id is intentionally a plain UUID without a foreign key. Events
+-- can land before the alerts row is inserted (local_inference fires at
+-- analysis time, the alerts row lands later in _output_worker) and some
+-- never produce an alerts row at all. A strict FK turns every one of
+-- those into a 23503 violation that also fails every other row in the
+-- same batched insert. Cascade-on-delete semantics are preserved via a
+-- trigger (see below) so admin/retention deletes still clean up.
 
 DO $$ BEGIN
   CREATE TYPE alert_lifecycle_event_type AS ENUM (
@@ -32,7 +40,7 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS public.alert_lifecycle_events (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  alert_id        UUID REFERENCES public.alerts(id) ON DELETE CASCADE,
+  alert_id        UUID,
   camera_id       TEXT REFERENCES public.cameras(id) ON DELETE SET NULL,
   source_filename TEXT,
   event_type      alert_lifecycle_event_type NOT NULL,
@@ -67,3 +75,43 @@ DO $$ BEGIN
   ALTER PUBLICATION supabase_realtime ADD TABLE public.alert_lifecycle_events;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+-- Cascade-on-delete for alerts → lifecycle events, implemented as a
+-- trigger instead of a FK so pre-insert and orphan events don't cause
+-- 23503 violations on insert.
+CREATE OR REPLACE FUNCTION public.cleanup_lifecycle_events_for_alert()
+RETURNS TRIGGER AS $$
+BEGIN
+  DELETE FROM public.alert_lifecycle_events
+   WHERE alert_id = OLD.id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_cleanup_lifecycle_events ON public.alerts;
+CREATE TRIGGER trg_cleanup_lifecycle_events
+  AFTER DELETE ON public.alerts
+  FOR EACH ROW
+  EXECUTE FUNCTION public.cleanup_lifecycle_events_for_alert();
+
+-- Retention prune for orphan events: NULL alert_id, or alert_id with
+-- no corresponding alerts row (never inserted — skip_push, declined
+-- cloud confirm, failed push).
+CREATE OR REPLACE FUNCTION public.prune_orphan_lifecycle_events(retention_hours INT DEFAULT 48)
+RETURNS INTEGER AS $$
+DECLARE
+  deleted INTEGER;
+BEGIN
+  WITH d AS (
+    DELETE FROM public.alert_lifecycle_events ale
+     WHERE ale.created_at < now() - (retention_hours || ' hours')::interval
+       AND (ale.alert_id IS NULL
+            OR NOT EXISTS (
+              SELECT 1 FROM public.alerts a WHERE a.id = ale.alert_id
+            ))
+    RETURNING 1
+  )
+  SELECT count(*) INTO deleted FROM d;
+  RETURN deleted;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
